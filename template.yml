@@ -92,3 +92,42 @@ Resources:
       Statistic: Sum
       Threshold: 1
       TreatMissingData: notBreaching
+
+  #----------------------------------------------------------------------------
+  # IAMポリシーの変更を検知するアラームを作成する
+  #----------------------------------------------------------------------------
+  IAMPolicyChangeFilter:
+    Type: "AWS::Logs::MetricFilter"
+    Properties:
+      FilterPattern: >-
+        {($.eventName=DeleteGroupPolicy) || ($.eventName=DeleteRolePolicy)
+        || ($.eventName=DeleteUserPolicy) || ($.eventName=PutGroupPolicy)
+        || ($.eventName=PutRolePolicy) || ($.eventName=PutUserPolicy)
+        || ($.eventName=CreatePolicy) || ($.eventName=DeletePolicy)
+        || ($.eventName=CreatePolicyVersion) || ($.eventName=DeletePolicyVersion)
+        || ($.eventName=AttachRolePolicy) || ($.eventName=DetachRolePolicy)
+        || ($.eventName=AttachUserPolicy) || ($.eventName=DetachUserPolicy)
+        || ($.eventName=AttachGroupPolicy) || ($.eventName=DetachGroupPolicy)}
+      LogGroupName: !Ref TrailLogGroupName
+      MetricTransformations:
+        - MetricNamespace: !Ref MetricNamespace
+          MetricName: IAMPolicyChange
+          MetricValue: '1'
+  
+  IAMPolicyChangeAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmName: IAMPolicyChange
+      AlarmDescription: Alarm cloudtrail detected　IAM policy changes 
+      ActionsEnabled: true
+      Namespace: !Ref MetricNamespace
+      MetricName: IAMPolicyChange
+      AlarmActions:
+        - !Ref SecurityAlarmSNS
+      ComparisonOperator: GreaterThanOrEqualToThreshold 
+      DatapointsToAlarm: 1
+      EvaluationPeriods: 1
+      Period: 300
+      Statistic: Sum
+      Threshold: 1
+      TreatMissingData: notBreaching
