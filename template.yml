@@ -94,7 +94,7 @@ Resources:
       TreatMissingData: notBreaching
 
   #----------------------------------------------------------------------------
-  # IAMポリシーの変更を検知するアラームを作成する
+  # IAMポリシーの変更を検知するアラーム
   #----------------------------------------------------------------------------
   IAMPolicyChangeFilter:
     Type: "AWS::Logs::MetricFilter"
@@ -117,11 +117,46 @@ Resources:
   IAMPolicyChangeAlarm:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
-      AlarmName: IAMPolicyChange
+      AlarmName: IAMPolicyChangeAlarm
       AlarmDescription: Alarm cloudtrail detected　IAM policy changes 
       ActionsEnabled: true
       Namespace: !Ref MetricNamespace
       MetricName: IAMPolicyChange
+      AlarmActions:
+        - !Ref SecurityAlarmSNS
+      ComparisonOperator: GreaterThanOrEqualToThreshold 
+      DatapointsToAlarm: 1
+      EvaluationPeriods: 1
+      Period: 300
+      Statistic: Sum
+      Threshold: 1
+      TreatMissingData: notBreaching
+  
+  
+  #----------------------------------------------------------------------------
+  # CloudTrail設定の変更を検知するアラームを作成する
+  #----------------------------------------------------------------------------
+  CloudTrailConfigChangeFilter :
+    Type: "AWS::Logs::MetricFilter"
+    Properties:
+      FilterPattern: >-
+        {($.eventName = CreateTrail) || ($.eventName = UpdateTrail)
+        || ($.eventName =DeleteTrail) || ($.eventName = StartLogging) 
+        || ($.eventName = StopLogging)}
+      LogGroupName: !Ref TrailLogGroupName
+      MetricTransformations:
+        - MetricNamespace: !Ref MetricNamespace
+          MetricName: CloudTrailConfigChange
+          MetricValue: '1'
+  
+  CloudTrailConfigChangeAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmName: CloudTrailConfigChangeAlarm
+      AlarmDescription: Alarm cloudtrail detected　CloudTrail config changes 
+      ActionsEnabled: true
+      Namespace: !Ref MetricNamespace
+      MetricName: CloudTrailConfigChange
       AlarmActions:
         - !Ref SecurityAlarmSNS
       ComparisonOperator: GreaterThanOrEqualToThreshold 
