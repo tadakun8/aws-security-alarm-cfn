@@ -134,7 +134,7 @@ Resources:
   
   
   #----------------------------------------------------------------------------
-  # CloudTrail設定の変更を検知するアラームを作成する
+  # CloudTrail設定の変更を検知するアラーム
   #----------------------------------------------------------------------------
   CloudTrailConfigChangeFilter :
     Type: "AWS::Logs::MetricFilter"
@@ -157,6 +157,37 @@ Resources:
       ActionsEnabled: true
       Namespace: !Ref MetricNamespace
       MetricName: CloudTrailConfigChange
+      AlarmActions:
+        - !Ref SecurityAlarmSNS
+      ComparisonOperator: GreaterThanOrEqualToThreshold 
+      DatapointsToAlarm: 1
+      EvaluationPeriods: 1
+      Period: 300
+      Statistic: Sum
+      Threshold: 1
+      TreatMissingData: notBreaching
+  
+  #----------------------------------------------------------------------------
+  # CloudTrail設定の変更を検知するアラーム
+  #----------------------------------------------------------------------------
+  ManagementConsoleAuthFailureFilter:
+    Type: "AWS::Logs::MetricFilter"
+    Properties:
+      FilterPattern: '{($.eventName = ConsoleLogin) && ($.errorMessage = "Failed authentication")}'
+      LogGroupName: !Ref TrailLogGroupName
+      MetricTransformations:
+        - MetricNamespace: !Ref MetricNamespace
+          MetricName: ManagementConsoleAuthFailure
+          MetricValue: '1'
+    
+  ManagementConsoleAuthFailureAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmName: ManagementConsoleAuthFailureAlarm
+      AlarmDescription: Alarm cloudtrail detected management console login failure 
+      ActionsEnabled: true
+      Namespace: !Ref MetricNamespace
+      MetricName: ManagementConsoleAuthFailure
       AlarmActions:
         - !Ref SecurityAlarmSNS
       ComparisonOperator: GreaterThanOrEqualToThreshold 
