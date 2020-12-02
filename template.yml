@@ -62,3 +62,33 @@ Resources:
       Threshold: 1
       TreatMissingData: notBreaching
 
+  #----------------------------------------------------------------------------
+  # MFAなしでのAWSマネージメントコンソールログインに対してのアラーム通知設定
+  #----------------------------------------------------------------------------
+  LoginWithoutMFAFilter:
+    Type: "AWS::Logs::MetricFilter"
+    Properties:
+      FilterPattern: '{($.eventName = "ConsoleLogin") && ($.additionalEventData.MFAUsed != "Yes")}'
+      LogGroupName: !Ref TrailLogGroupName
+      MetricTransformations:
+        - MetricNamespace: !Ref MetricNamespace
+          MetricName: LoginWithoutMFA
+          MetricValue: '1'
+  
+  LoginWithoutMFAAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmName: LoginWithoutMFAAlarm
+      AlarmDescription: Alarm cloudtrail detected console login without MFA
+      ActionsEnabled: true
+      Namespace: !Ref MetricNamespace
+      MetricName: LoginWithoutMFA
+      AlarmActions:
+        - !Ref SecurityAlarmSNS
+      ComparisonOperator: GreaterThanOrEqualToThreshold 
+      DatapointsToAlarm: 1
+      EvaluationPeriods: 1
+      Period: 300
+      Statistic: Sum
+      Threshold: 1
+      TreatMissingData: notBreaching
