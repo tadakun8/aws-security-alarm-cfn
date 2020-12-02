@@ -1,0 +1,64 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: security alarm
+
+Parameters:
+  TrailLogGroupName:
+    Type: String
+  MetricNamespace:
+    Type: String
+    Default: TrailLogMetrics
+  SNSTopicName:
+    Type: String
+    Default: SecurityAlarm
+  SNSDisplayName:
+    Type: String
+    Default: SecurityAlarm
+  # 通知先が複数ならばメーリングリストが良い
+  SecurityAlarmEmailAddress: 
+    Type: String
+    Default: '{{resolve:ssm:SecurityAlarmEmailAddress:1}}'
+
+Resources:
+  SecurityAlarmSNS:
+    Type: "AWS::SNS::Topic"
+    Properties:
+      TopicName: !Ref SNSTopicName
+      DisplayName: !Ref SNSDisplayName
+      # SNSの暗号化とは？
+      # KmsMasterKeyId: String
+      Subscription:
+        - Endpoint: !Ref SecurityAlarmEmailAddress
+          Protocol: email
+  
+  #----------------------------------------------------------------------------
+  # 許可されていないAPIコールに対するアラーム通知設定
+  #----------------------------------------------------------------------------
+  UnauthorizedAPICallsFilter:
+    Type: "AWS::Logs::MetricFilter"
+    Properties:
+      FilterPattern: '{($.errorCode="*UnauthorizedOperation") || ($.errorCode="AccessDenied*")}'
+      LogGroupName: !Ref TrailLogGroupName
+      MetricTransformations:
+        - MetricNamespace: !Ref MetricNamespace
+          MetricName: UnauthorizedAPICalls
+          MetricValue: '1'
+  
+  UnauthorizedAPICallsAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmName: UnauthorizedAPICallsAlarm
+      AlarmDescription: Alarm cloudtrail detected unauthorized API calls
+      ActionsEnabled: true
+      Namespace: !Ref MetricNamespace
+      MetricName: UnauthorizedAPICalls
+      AlarmActions:
+        - !Ref SecurityAlarmSNS
+      ComparisonOperator: GreaterThanOrEqualToThreshold 
+      # 以下2つのみをもう少し詳しく知りたい
+      DatapointsToAlarm: 1
+      EvaluationPeriods: 1
+      Period: 300
+      Statistic: Sum
+      Threshold: 1
+      TreatMissingData: notBreaching
+
