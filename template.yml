@@ -197,3 +197,37 @@ Resources:
       Statistic: Sum
       Threshold: 1
       TreatMissingData: notBreaching
+  
+
+  #----------------------------------------------------------------------------
+  # KMSマスターキー(CMK)の無効化またはスケジュール削除を検知する
+  #----------------------------------------------------------------------------
+  CMKChangeFilter:
+    Type: "AWS::Logs::MetricFilter"
+    Properties:
+      FilterPattern: >-
+        {($.eventSource = kms.amazonaws.com) &&
+        (($.eventName=DisableKey)||($.eventName=ScheduleKeyDeletion))}
+      LogGroupName: !Ref TrailLogGroupName
+      MetricTransformations:
+        - MetricNamespace: !Ref MetricNamespace
+          MetricName: CMKChange
+          MetricValue: '1'
+    
+  CMKChangeAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmName: CMKChangeAlarm
+      AlarmDescription: Alarm cloudtrail detected CMK changes
+      ActionsEnabled: true
+      Namespace: !Ref MetricNamespace
+      MetricName: CMKChange
+      AlarmActions:
+        - !Ref SecurityAlarmSNS
+      ComparisonOperator: GreaterThanOrEqualToThreshold 
+      DatapointsToAlarm: 1
+      EvaluationPeriods: 1
+      Period: 300
+      Statistic: Sum
+      Threshold: 1
+      TreatMissingData: notBreaching
