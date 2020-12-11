@@ -269,3 +269,199 @@ Resources:
       Statistic: Sum
       Threshold: 1
       TreatMissingData: notBreaching
+    
+  
+  #----------------------------------------------------------------------------
+  # セキュリティグループ変更を検知するアラームを作成する
+  #----------------------------------------------------------------------------
+  SecurityGroupChangeFilter:
+    Type: "AWS::Logs::MetricFilter"
+    Properties:
+      FilterPattern: >-
+        { ($.eventName = AuthorizeSecurityGroupIngress) 
+        || ($.eventName = AuthorizeSecurityGroupEgress) 
+        || ($.eventName = RevokeSecurityGroupIngress) 
+        || ($.eventName = RevokeSecurityGroupEgress) 
+        || ($.eventName = CreateSecurityGroup) 
+        || ($.eventName = DeleteSecurityGroup) }
+      LogGroupName: !Ref TrailLogGroupName
+      MetricTransformations:
+        - MetricNamespace: !Ref MetricNamespace
+          MetricName: S3BucketPolicyChange
+          MetricValue: '1'
+    
+  SecurityGroupChangeAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmName: SecurityGroupChangeAlarm
+      AlarmDescription: Alarm cloudtrail detected security group changes
+      ActionsEnabled: true
+      Namespace: !Ref MetricNamespace
+      MetricName: SecurityGroupChange
+      AlarmActions:
+        - !Ref SecurityAlarmSNS
+      ComparisonOperator: GreaterThanOrEqualToThreshold 
+      DatapointsToAlarm: 1
+      EvaluationPeriods: 1
+      Period: 300
+      Statistic: Sum
+      Threshold: 1
+      TreatMissingData: notBreaching
+
+  
+  #----------------------------------------------------------------------------
+  # ネットワークACLの変更を検知するアラームを作成する
+  #----------------------------------------------------------------------------
+  NetworkAclChangeFilter:
+    Type: "AWS::Logs::MetricFilter"
+    Properties:
+      FilterPattern: >-
+        { ($.eventName = CreateNetworkAcl) 
+        || ($.eventName = CreateNetworkAclEntry) 
+        || ($.eventName = DeleteNetworkAcl) 
+        || ($.eventName = DeleteNetworkAclEntry) 
+        || ($.eventName = ReplaceNetworkAclEntry) 
+        || ($.eventName = ReplaceNetworkAclAssociation) }
+      LogGroupName: !Ref TrailLogGroupName
+      MetricTransformations:
+        - MetricNamespace: !Ref MetricNamespace
+          MetricName: NetworkAclChange
+          MetricValue: '1'
+    
+  NetworkAclChangeAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmName: NetworkAclChangeAlarm
+      AlarmDescription: Alarm cloudtrail detected network acl changes
+      ActionsEnabled: true
+      Namespace: !Ref MetricNamespace
+      MetricName: NetworkAclChange
+      AlarmActions:
+        - !Ref SecurityAlarmSNS
+      ComparisonOperator: GreaterThanOrEqualToThreshold 
+      DatapointsToAlarm: 1
+      EvaluationPeriods: 1
+      Period: 300
+      Statistic: Sum
+      Threshold: 1
+      TreatMissingData: notBreaching
+
+
+  #----------------------------------------------------------------------------
+  # インターネットゲートウェイ変更を検知するアラーム
+  #----------------------------------------------------------------------------
+  InternetGatewayChangeFilter:
+    Type: "AWS::Logs::MetricFilter"
+    Properties:
+      FilterPattern: >-
+        { ($.eventName = CreateCustomerGateway) 
+        || ($.eventName = DeleteCustomerGateway) 
+        || ($.eventName = AttachInternetGateway) 
+        || ($.eventName = CreateInternetGateway) 
+        || ($.eventName = DeleteInternetGateway) 
+        || ($.eventName = DetachInternetGateway) }
+      LogGroupName: !Ref TrailLogGroupName
+      MetricTransformations:
+        - MetricNamespace: !Ref MetricNamespace
+          MetricName: InternetGatewayChange
+          MetricValue: '1'
+    
+  InternetGatewayChangeAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmName: InternetGatewayChangeAlarm
+      AlarmDescription: Alarm cloudtrail detected internet gateway changes
+      ActionsEnabled: true
+      Namespace: !Ref MetricNamespace
+      MetricName: InternetGatewayChange
+      AlarmActions:
+        - !Ref SecurityAlarmSNS
+      ComparisonOperator: GreaterThanOrEqualToThreshold 
+      DatapointsToAlarm: 1
+      EvaluationPeriods: 1
+      Period: 300
+      Statistic: Sum
+      Threshold: 1
+      TreatMissingData: notBreaching
+
+  
+  #----------------------------------------------------------------------------
+  # ルートテーブル変更を検知するアラーム
+  #----------------------------------------------------------------------------
+  RouteTableChangeFilter:
+    Type: "AWS::Logs::MetricFilter"
+    Properties:
+      FilterPattern: >-
+        { ($.eventName = CreateRoute) 
+        || ($.eventName = CreateRouteTable) 
+        || ($.eventName = ReplaceRoute) 
+        || ($.eventName = ReplaceRouteTableAssociation) 
+        || ($.eventName = DeleteRouteTable) 
+        || ($.eventName = DeleteRoute) 
+        || ($.eventName = DisassociateRouteTable) }
+      LogGroupName: !Ref TrailLogGroupName
+      MetricTransformations:
+        - MetricNamespace: !Ref MetricNamespace
+          MetricName: RouteTableChange
+          MetricValue: '1'
+    
+  RouteTableChangeAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmName: RouteTableChangeAlarm
+      AlarmDescription: Alarm cloudtrail detected route table changes
+      ActionsEnabled: true
+      Namespace: !Ref MetricNamespace
+      MetricName: RouteTableChange
+      AlarmActions:
+        - !Ref SecurityAlarmSNS
+      ComparisonOperator: GreaterThanOrEqualToThreshold 
+      DatapointsToAlarm: 1
+      EvaluationPeriods: 1
+      Period: 300
+      Statistic: Sum
+      Threshold: 1
+      TreatMissingData: notBreaching
+
+
+  #----------------------------------------------------------------------------
+  # VPC変更を検知するアラーム
+  #----------------------------------------------------------------------------
+  VPCChangeFilter:
+    Type: "AWS::Logs::MetricFilter"
+    Properties:
+      FilterPattern: >-
+        { ($.eventName = CreateVpc) 
+        || ($.eventName = DeleteVpc) 
+        || ($.eventName = ModifyVpcAttribute) 
+        || ($.eventName = AcceptVpcPeeringConnection) 
+        || ($.eventName = CreateVpcPeeringConnection) 
+        || ($.eventName = DeleteVpcPeeringConnection) 
+        || ($.eventName = RejectVpcPeeringConnection) 
+        || ($.eventName = AttachClassicLinkVpc) 
+        || ($.eventName = DetachClassicLinkVpc) 
+        || ($.eventName = DisableVpcClassicLink) 
+        || ($.eventName = EnableVpcClassicLink) }
+      LogGroupName: !Ref TrailLogGroupName
+      MetricTransformations:
+        - MetricNamespace: !Ref MetricNamespace
+          MetricName: VPCChange
+          MetricValue: '1'
+    
+  VPCChangeAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmName: VPCChangeAlarm
+      AlarmDescription: Alarm cloudtrail detected vpc changes
+      ActionsEnabled: true
+      Namespace: !Ref MetricNamespace
+      MetricName: VPCChange
+      AlarmActions:
+        - !Ref SecurityAlarmSNS
+      ComparisonOperator: GreaterThanOrEqualToThreshold 
+      DatapointsToAlarm: 1
+      EvaluationPeriods: 1
+      Period: 300
+      Statistic: Sum
+      Threshold: 1
+      TreatMissingData: notBreaching
