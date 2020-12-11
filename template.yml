@@ -347,4 +347,39 @@ Resources:
       TreatMissingData: notBreaching
 
 
-  
+  #----------------------------------------------------------------------------
+  # インターネットゲートウェイ変更を検知するアラーム
+  #----------------------------------------------------------------------------
+  InternetGatewayChangeFilter:
+    Type: "AWS::Logs::MetricFilter"
+    Properties:
+      FilterPattern: >-
+        { ($.eventName = CreateCustomerGateway) 
+        || ($.eventName = DeleteCustomerGateway) 
+        || ($.eventName = AttachInternetGateway) 
+        || ($.eventName = CreateInternetGateway) 
+        || ($.eventName = DeleteInternetGateway) 
+        || ($.eventName = DetachInternetGateway) }
+      LogGroupName: !Ref TrailLogGroupName
+      MetricTransformations:
+        - MetricNamespace: !Ref MetricNamespace
+          MetricName: InternetGatewayChange
+          MetricValue: '1'
+    
+  InternetGatewayChangeAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmName: InternetGatewayChangeAlarm
+      AlarmDescription: Alarm cloudtrail detected internet gateway changes
+      ActionsEnabled: true
+      Namespace: !Ref MetricNamespace
+      MetricName: InternetGatewayChange
+      AlarmActions:
+        - !Ref SecurityAlarmSNS
+      ComparisonOperator: GreaterThanOrEqualToThreshold 
+      DatapointsToAlarm: 1
+      EvaluationPeriods: 1
+      Period: 300
+      Statistic: Sum
+      Threshold: 1
+      TreatMissingData: notBreaching
