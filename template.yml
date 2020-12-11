@@ -269,3 +269,44 @@ Resources:
       Statistic: Sum
       Threshold: 1
       TreatMissingData: notBreaching
+    
+  
+  #----------------------------------------------------------------------------
+  # セキュリティグループ変更を検知するアラームを作成する
+  #----------------------------------------------------------------------------
+  SecurityGroupChangeFilter:
+    Type: "AWS::Logs::MetricFilter"
+    Properties:
+      FilterPattern: >-
+        { ($.eventName = AuthorizeSecurityGroupIngress) 
+        || ($.eventName = AuthorizeSecurityGroupEgress) 
+        || ($.eventName = RevokeSecurityGroupIngress) 
+        || ($.eventName = RevokeSecurityGroupEgress) 
+        || ($.eventName = CreateSecurityGroup) 
+        || ($.eventName = DeleteSecurityGroup) }
+      LogGroupName: !Ref TrailLogGroupName
+      MetricTransformations:
+        - MetricNamespace: !Ref MetricNamespace
+          MetricName: S3BucketPolicyChange
+          MetricValue: '1'
+    
+  SecurityGroupChangeAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmName: SecurityGroupChangeAlarm
+      AlarmDescription: Alarm cloudtrail detected security group changes
+      ActionsEnabled: true
+      Namespace: !Ref MetricNamespace
+      MetricName: SecurityGroupChange
+      AlarmActions:
+        - !Ref SecurityAlarmSNS
+      ComparisonOperator: GreaterThanOrEqualToThreshold 
+      DatapointsToAlarm: 1
+      EvaluationPeriods: 1
+      Period: 300
+      Statistic: Sum
+      Threshold: 1
+      TreatMissingData: notBreaching
+
+  
+  
