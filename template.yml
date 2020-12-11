@@ -168,7 +168,7 @@ Resources:
       TreatMissingData: notBreaching
   
   #----------------------------------------------------------------------------
-  # CloudTrail設定の変更を検知するアラーム
+  # AWSマネージメントコンソールのログイン失敗を検知するアラーム
   #----------------------------------------------------------------------------
   ManagementConsoleAuthFailureFilter:
     Type: "AWS::Logs::MetricFilter"
@@ -200,7 +200,7 @@ Resources:
   
 
   #----------------------------------------------------------------------------
-  # KMSマスターキー(CMK)の無効化またはスケジュール削除を検知する
+  # KMSマスターキー(CMK)の無効化またはスケジュール削除を検知するアラーム
   #----------------------------------------------------------------------------
   CMKChangeFilter:
     Type: "AWS::Logs::MetricFilter"
@@ -222,6 +222,44 @@ Resources:
       ActionsEnabled: true
       Namespace: !Ref MetricNamespace
       MetricName: CMKChange
+      AlarmActions:
+        - !Ref SecurityAlarmSNS
+      ComparisonOperator: GreaterThanOrEqualToThreshold 
+      DatapointsToAlarm: 1
+      EvaluationPeriods: 1
+      Period: 300
+      Statistic: Sum
+      Threshold: 1
+      TreatMissingData: notBreaching
+  
+
+  #----------------------------------------------------------------------------
+  # S3バケットポリシー変更を検知するアラーム
+  #----------------------------------------------------------------------------
+  S3BucketPolicyChangeFilter:
+    Type: "AWS::Logs::MetricFilter"
+    Properties:
+      FilterPattern: >-
+        { ($.eventSource = s3.amazonaws.com) && 
+        (($.eventName = PutBucketAcl) || ($.eventName = PutBucketPolicy)
+        || ($.eventName = PutBucketCors) || ($.eventName = PutBucketLifecycle) 
+        || ($.eventName = PutBucketReplication) || ($.eventName = DeleteBucketPolicy) 
+        || ($.eventName = DeleteBucketCors) || ($.eventName = DeleteBucketLifecycle) 
+        || ($.eventName = DeleteBucketReplication)) }
+      LogGroupName: !Ref TrailLogGroupName
+      MetricTransformations:
+        - MetricNamespace: !Ref MetricNamespace
+          MetricName: S3BucketPolicyChange
+          MetricValue: '1'
+    
+  S3BucketPolicyChangeAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmName: S3BucketPolicyChange
+      AlarmDescription: Alarm cloudtrail detected S3Bucket policy changes
+      ActionsEnabled: true
+      Namespace: !Ref MetricNamespace
+      MetricName: S3BucketPolicyChange
       AlarmActions:
         - !Ref SecurityAlarmSNS
       ComparisonOperator: GreaterThanOrEqualToThreshold 
