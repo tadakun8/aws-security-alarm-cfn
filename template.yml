@@ -309,4 +309,42 @@ Resources:
       TreatMissingData: notBreaching
 
   
+  #----------------------------------------------------------------------------
+  # ネットワークACLの変更を検知するアラームを作成する
+  #----------------------------------------------------------------------------
+  NetworkAclChangeFilter:
+    Type: "AWS::Logs::MetricFilter"
+    Properties:
+      FilterPattern: >-
+        { ($.eventName = CreateNetworkAcl) 
+        || ($.eventName = CreateNetworkAclEntry) 
+        || ($.eventName = DeleteNetworkAcl) 
+        || ($.eventName = DeleteNetworkAclEntry) 
+        || ($.eventName = ReplaceNetworkAclEntry) 
+        || ($.eventName = ReplaceNetworkAclAssociation) }
+      LogGroupName: !Ref TrailLogGroupName
+      MetricTransformations:
+        - MetricNamespace: !Ref MetricNamespace
+          MetricName: NetworkAclChange
+          MetricValue: '1'
+    
+  NetworkAclChangeAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmName: NetworkAclChangeAlarm
+      AlarmDescription: Alarm cloudtrail detected network acl changes
+      ActionsEnabled: true
+      Namespace: !Ref MetricNamespace
+      MetricName: NetworkAclChange
+      AlarmActions:
+        - !Ref SecurityAlarmSNS
+      ComparisonOperator: GreaterThanOrEqualToThreshold 
+      DatapointsToAlarm: 1
+      EvaluationPeriods: 1
+      Period: 300
+      Statistic: Sum
+      Threshold: 1
+      TreatMissingData: notBreaching
+
+
   
