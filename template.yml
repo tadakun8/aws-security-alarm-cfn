@@ -383,3 +383,42 @@ Resources:
       Statistic: Sum
       Threshold: 1
       TreatMissingData: notBreaching
+
+  
+  #----------------------------------------------------------------------------
+  # ルートテーブル変更を検知するアラーム
+  #----------------------------------------------------------------------------
+  RouteTableChangeFilter:
+    Type: "AWS::Logs::MetricFilter"
+    Properties:
+      FilterPattern: >-
+        { ($.eventName = CreateRoute) 
+        || ($.eventName = CreateRouteTable) 
+        || ($.eventName = ReplaceRoute) 
+        || ($.eventName = ReplaceRouteTableAssociation) 
+        || ($.eventName = DeleteRouteTable) 
+        || ($.eventName = DeleteRoute) 
+        || ($.eventName = DisassociateRouteTable) }
+      LogGroupName: !Ref TrailLogGroupName
+      MetricTransformations:
+        - MetricNamespace: !Ref MetricNamespace
+          MetricName: RouteTableChange
+          MetricValue: '1'
+    
+  RouteTableChangeAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmName: RouteTableChangeAlarm
+      AlarmDescription: Alarm cloudtrail detected route table changes
+      ActionsEnabled: true
+      Namespace: !Ref MetricNamespace
+      MetricName: RouteTableChange
+      AlarmActions:
+        - !Ref SecurityAlarmSNS
+      ComparisonOperator: GreaterThanOrEqualToThreshold 
+      DatapointsToAlarm: 1
+      EvaluationPeriods: 1
+      Period: 300
+      Statistic: Sum
+      Threshold: 1
+      TreatMissingData: notBreaching
