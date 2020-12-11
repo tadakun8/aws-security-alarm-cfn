@@ -422,3 +422,46 @@ Resources:
       Statistic: Sum
       Threshold: 1
       TreatMissingData: notBreaching
+
+
+  #----------------------------------------------------------------------------
+  # VPC変更を検知するアラーム
+  #----------------------------------------------------------------------------
+  VPCChangeFilter:
+    Type: "AWS::Logs::MetricFilter"
+    Properties:
+      FilterPattern: >-
+        { ($.eventName = CreateVpc) 
+        || ($.eventName = DeleteVpc) 
+        || ($.eventName = ModifyVpcAttribute) 
+        || ($.eventName = AcceptVpcPeeringConnection) 
+        || ($.eventName = CreateVpcPeeringConnection) 
+        || ($.eventName = DeleteVpcPeeringConnection) 
+        || ($.eventName = RejectVpcPeeringConnection) 
+        || ($.eventName = AttachClassicLinkVpc) 
+        || ($.eventName = DetachClassicLinkVpc) 
+        || ($.eventName = DisableVpcClassicLink) 
+        || ($.eventName = EnableVpcClassicLink) }
+      LogGroupName: !Ref TrailLogGroupName
+      MetricTransformations:
+        - MetricNamespace: !Ref MetricNamespace
+          MetricName: VPCChange
+          MetricValue: '1'
+    
+  VPCChangeAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmName: VPCChangeAlarm
+      AlarmDescription: Alarm cloudtrail detected vpc changes
+      ActionsEnabled: true
+      Namespace: !Ref MetricNamespace
+      MetricName: VPCChange
+      AlarmActions:
+        - !Ref SecurityAlarmSNS
+      ComparisonOperator: GreaterThanOrEqualToThreshold 
+      DatapointsToAlarm: 1
+      EvaluationPeriods: 1
+      Period: 300
+      Statistic: Sum
+      Threshold: 1
+      TreatMissingData: notBreaching
