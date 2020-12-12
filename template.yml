@@ -272,6 +272,43 @@ Resources:
     
   
   #----------------------------------------------------------------------------
+  # AWS Configの変更を検知するアラームを作成する
+  #----------------------------------------------------------------------------
+  AWSConfigChange:
+    Type: "AWS::Logs::MetricFilter"
+    Properties:
+      FilterPattern: >-
+        { ($.eventSource = config.amazonaws.com) &&
+        ( ($.eventName = StopConfigurationRecorder) 
+        || ($.eventName = DeleteDeliveryChannel) 
+        || ($.eventName = PutDeliveryChannel) 
+        || ($.eventName = PutConfigurationRecorder)) }
+      LogGroupName: !Ref TrailLogGroupName
+      MetricTransformations:
+        - MetricNamespace: !Ref MetricNamespace
+          MetricName: AWSConfigChange
+          MetricValue: '1'
+    
+  AWSConfigChangeAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmName: AWSConfigChangeAlarm
+      AlarmDescription: Alarm cloudtrail detected aws config changes
+      ActionsEnabled: true
+      Namespace: !Ref MetricNamespace
+      MetricName: AWSConfigChange
+      AlarmActions:
+        - !Ref SecurityAlarmSNS
+      ComparisonOperator: GreaterThanOrEqualToThreshold 
+      DatapointsToAlarm: 1
+      EvaluationPeriods: 1
+      Period: 300
+      Statistic: Sum
+      Threshold: 1
+      TreatMissingData: notBreaching
+  
+  
+  #----------------------------------------------------------------------------
   # セキュリティグループ変更を検知するアラームを作成する
   #----------------------------------------------------------------------------
   SecurityGroupChangeFilter:
