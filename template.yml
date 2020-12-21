@@ -94,6 +94,41 @@ Resources:
       TreatMissingData: notBreaching
 
   #----------------------------------------------------------------------------
+  # rootユーザの利用を検知するアラーム
+  #----------------------------------------------------------------------------
+  UsingRootUserFilter:
+    Type: "AWS::Logs::MetricFilter"
+    Properties:
+      FilterPattern: >-
+        { $.userIdentity.type = "Root" 
+        && $.userIdentity.invokedBy NOT EXISTS 
+        && $.eventType != "AwsServiceEvent" }
+      LogGroupName: !Ref TrailLogGroupName
+      MetricTransformations:
+        - MetricNamespace: !Ref MetricNamespace
+          MetricName: UsingRootUser
+          MetricValue: '1'
+  
+  UsingRootUserAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmName: UsingRootUserAlarm
+      AlarmDescription: Alarm cloudtrail detected using root user
+      ActionsEnabled: true
+      Namespace: !Ref MetricNamespace
+      MetricName: UsingRootUser
+      AlarmActions:
+        - !Ref SecurityAlarmSNS
+      ComparisonOperator: GreaterThanOrEqualToThreshold 
+      DatapointsToAlarm: 1
+      EvaluationPeriods: 1
+      Period: 300
+      Statistic: Sum
+      Threshold: 1
+      TreatMissingData: notBreaching
+
+
+  #----------------------------------------------------------------------------
   # IAMポリシーの変更を検知するアラーム
   #----------------------------------------------------------------------------
   IAMPolicyChangeFilter:
