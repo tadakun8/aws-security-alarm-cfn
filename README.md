@@ -11,11 +11,11 @@
   - パラメータ名を`SecurityAlarmEmailAddress`とする
 - 以下のコマンドを打つ(変更セットの作成)
     
-    `$ ./create-change-set.sh`
+    ```$ ./create-change-set.sh```
 
 - 変更セットを確認した後、以下のコマンドを打つ(実際にデプロイする)
   
-    `$ ./create-change-set.sh deploy`
+    ```$ ./create-change-set.sh deploy```
 
 ## 参考 URL
 
