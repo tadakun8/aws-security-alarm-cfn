@@ -30,6 +30,22 @@ Resources:
         - Endpoint: !Ref SecurityAlarmEmailAddress
           Protocol: email
   
+  SecurityAlarmTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      Topics: #required
+        - !Ref SecurityAlarmSNS
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - cloudwatch.amazonaws.com
+            Action:
+              - sns:Publish
+            Resource: !Ref SecurityAlarmSNS
+  
   #----------------------------------------------------------------------------
   # 許可されていないAPIコールに対するアラーム通知設定
   #----------------------------------------------------------------------------
